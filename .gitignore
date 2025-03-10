@@ -63,10 +63,6 @@ local.properties
 
 # ENV
 .env
-.env.local
-.env.development
-.env.production
-.env.test
 
 # External tool builders
 .externalToolBuilders/
