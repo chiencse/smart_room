@@ -1,16 +1,19 @@
 package com.example.smart_room.model;
 
 import jakarta.persistence.*;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "users") // Avoid using "user" as it might be a reserved keyword
-@Data // Includes @Getter, @Setter, @ToString, @EqualsAndHashCode, @RequiredArgsConstructor
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class User implements UserDetails {
@@ -23,7 +26,7 @@ public class User implements UserDetails {
     private String username;
 
     @Column(nullable = false)
-    private String password; // Store hashed password here
+    private String password;
 
     @Column(nullable = true, unique = true)
     private String email;
@@ -31,9 +34,16 @@ public class User implements UserDetails {
     @Column(nullable = true, unique = true)
     private String phoneNumber;
 
+    @ElementCollection(fetch = FetchType.EAGER) // Load roles with user
+    @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "role")
+    private Set<String> roles; // Example: ["ROLE_USER", "ROLE_ADMIN"]
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.emptyList(); // Implement roles if needed
+        return roles.stream()
+                .map(SimpleGrantedAuthority::new)
+                .collect(Collectors.toList());
     }
 
     @Override
