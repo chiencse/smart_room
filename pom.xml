@@ -101,6 +101,18 @@
 		</dependency>
 
 		<dependency>
+        <groupId>org.flywaydb</groupId>
+        <artifactId>flyway-core</artifactId>
+        <version>10.20.1</version>
+    </dependency>
+    <!-- Flyway PostgreSQL Support -->
+    <dependency>
+        <groupId>org.flywaydb</groupId>
+        <artifactId>flyway-database-postgresql</artifactId>
+        <version>10.20.1</version>
+    </dependency>
+
+		<dependency>
 			<groupId>com.google.firebase</groupId>
 			<artifactId>firebase-admin</artifactId>
 			<version>9.2.0</version>
