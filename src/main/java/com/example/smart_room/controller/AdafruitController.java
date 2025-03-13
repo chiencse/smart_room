@@ -1,34 +1,71 @@
 package com.example.smart_room.controller;
 
+import com.example.smart_room.model.SensorData;
 import com.example.smart_room.service.AdafruitService;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Logger;
 
 @RestController
 @RequestMapping("/api/adafruit")
 public class AdafruitController {
 
+    private static final Logger logger = Logger.getLogger(AdafruitController.class.getName());
+
     private final AdafruitService adafruitService;
 
-    @Autowired
     public AdafruitController(AdafruitService adafruitService) {
         this.adafruitService = adafruitService;
     }
 
-    // API để lấy danh sách feeds
+    /**
+     * API lấy danh sách tất cả các feeds từ Adafruit IO
+     */
     @GetMapping("/feeds")
-    public Object getFeeds() {
-        return adafruitService.getAllFeeds();
+    public ResponseEntity<?> getFeeds() {
+        List<Map<String, Object>> feeds = adafruitService.getAllFeeds();
+        if (feeds == null || feeds.isEmpty()) {
+            return ResponseEntity.status(404).body("Không tìm thấy feeds nào từ Adafruit.");
+        }
+        return ResponseEntity.ok(feeds);
     }
 
-    // API để đồng bộ dữ liệu của một feed cụ thể
-    @GetMapping("/sync")
-    public String syncFeedData(@RequestParam String feedKey) {
-        try {
-            adafruitService.fetchAndStoreFeedData(feedKey);
-            return "Dữ liệu của feed '" + feedKey + "' đã được đồng bộ lên PostgreSQL và Firebase.";
-        } catch (Exception e) {
-            return "Lỗi khi đồng bộ: " + e.getMessage();
+    /**
+     * API lấy dữ liệu mới nhất của một feed cụ thể từ Adafruit IO
+     */
+    @GetMapping("/feeds/{feedKey}")
+    public ResponseEntity<?> getFeedData(@PathVariable String feedKey) {
+        Map<String, Object> feedData = adafruitService.getFeedData(feedKey);
+        if (feedData == null) {
+            return ResponseEntity.status(404).body("Không tìm thấy dữ liệu cho feed: " + feedKey);
         }
+        return ResponseEntity.ok(feedData);
+    }
+
+    /**
+     * API đồng bộ dữ liệu từ Adafruit vào PostgreSQL & Firebase
+     */
+    @PostMapping("/fetch/{feedKey}")
+    public ResponseEntity<?> fetchAndSaveData(@PathVariable String feedKey) {
+        try {
+            adafruitService.fetchAndSaveData(feedKey);
+            return ResponseEntity.ok("Data fetched and saved for feed: " + feedKey);
+        } catch (Exception e) {
+            logger.severe("Error in fetchAndSaveData: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body("Lỗi đồng bộ  liệu: " + e.getMessage());
+        }
+    }
+
+    /**
+     * API lấy tất cả dữ liệu cảm biến đã lưu trong PostgreSQL
+     */
+    @GetMapping("/data")
+    public ResponseEntity<List<SensorData>> getAllSensorData() {
+        List<SensorData> dataList = adafruitService.getAllSensorData();
+        return ResponseEntity.ok(dataList);
     }
 }

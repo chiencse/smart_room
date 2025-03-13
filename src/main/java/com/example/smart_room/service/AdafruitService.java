@@ -1,14 +1,17 @@
 package com.example.smart_room.service;
 
-import com.example.smart_room.model.LogFeed;
-import com.example.smart_room.repository.LogFeedRepository;
+import com.example.smart_room.model.SensorData;
+import com.example.smart_room.repository.SensorDataRepository;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import org.springframework.beans.factory.annotation.Value;
+import java.util.logging.Logger;
 import org.springframework.http.HttpMethod;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -19,14 +22,14 @@ public class AdafruitService {
 
     @Value("${adafruit.api.base-url}")
     private String adafruitBaseUrl;
-
+    private static final Logger logger = Logger.getLogger(AdafruitService.class.getName());
     private final RestTemplate restTemplate = new RestTemplate();
     private final DatabaseReference firebaseDbRef;
-    private final LogFeedRepository logFeedRepository;
+    private final SensorDataRepository sensorDataRepository;
 
-    public AdafruitService(FirebaseDatabase firebaseDatabase, LogFeedRepository logFeedRepository) {
+    public AdafruitService(FirebaseDatabase firebaseDatabase, SensorDataRepository sensorDataRepository) {
         this.firebaseDbRef = firebaseDatabase.getReference("feeds");
-        this.logFeedRepository = logFeedRepository;
+        this.sensorDataRepository = sensorDataRepository;
     }
 
     /**
@@ -40,55 +43,122 @@ public class AdafruitService {
     }
 
     /**
-     * Lấy dữ liệu chi tiết của một feed từ Adafruit và lưu vào Firebase &
-     * PostgreSQL
+     * Lấy dữ liệu chi tiết của một feed từ Adafruit
      */
-    public void fetchAndStoreFeedData(String feedKey) {
-        String url = adafruitBaseUrl + "/feeds/" + feedKey;
-        // Lấy dữ liệu của feed (bao gồm last_value, created_at, etc.)
-        Map<String, Object> feedData = restTemplate.getForObject(url, Map.class);
-        if (feedData != null) {
-            // Lấy dữ liệu cần thiết
-            Long adafruitId = ((Number) feedData.get("id")).longValue();
-            String name = (String) feedData.get("name");
-            String lastValue = (String) feedData.get("last_value");
-            String lastValueAtStr = (String) feedData.get("last_value_at"); // Format: "2025-03-04T07:25:19Z"
-            String key = (String) feedData.get("key");
+    public Map<String, Object> getFeedData(String feedKey) {
+        String url = adafruitBaseUrl + "/feeds/" + feedKey + "/data";
 
-            String groupKey = null;
-            Map<String, Object> group = (Map<String, Object>) feedData.get("group");
-            if (group != null) {
-                groupKey = (String) group.get("key");
+        List<Map<String, Object>> response = restTemplate.exchange(url, HttpMethod.GET, null,
+                new ParameterizedTypeReference<List<Map<String, Object>>>() {
+                }).getBody();
+
+        if (response != null && !response.isEmpty()) {
+            Map<String, Object> latestData = response.get(0);
+
+            // Kiểm tra null trước khi trả về
+            if (latestData.get("last_value") == null) {
+                latestData.put("last_value", "N/A"); // Giá trị mặc định
+            }
+            if (latestData.get("last_value_at") == null) {
+                latestData.put("last_value_at", LocalDateTime.now().toString()); // Thời gian hiện tại
             }
 
-            LocalDateTime lastValueAt = null;
-            if (lastValueAtStr != null) {
-                // Chuyển đổi chuỗi ISO-8601 sang LocalDateTime
-                lastValueAt = LocalDateTime.parse(lastValueAtStr, DateTimeFormatter.ISO_DATE_TIME);
-            }
-
-            // Tạo đối tượng LogFeed để lưu vào PostgreSQL
-            LogFeed logFeed = new LogFeed();
-            logFeed.setAdafruitId(adafruitId);
-            logFeed.setName(name);
-            logFeed.setLastValue(lastValue);
-            logFeed.setLastValueAt(lastValueAt);
-            logFeed.setFeedKey(key);
-            logFeed.setGroupKey(groupKey);
-            // Giả sử created_at của feed cũng được lưu từ Adafruit
-            String createdAtStr = (String) feedData.get("created_at");
-            if (createdAtStr != null) {
-                LocalDateTime createdAt = LocalDateTime.parse(createdAtStr, DateTimeFormatter.ISO_DATE_TIME);
-                logFeed.setCreatedAt(createdAt);
-            } else {
-                logFeed.setCreatedAt(LocalDateTime.now());
-            }
-            logFeedRepository.save(logFeed);
-
-            // Lưu dữ liệu lên Firebase Realtime Database
-            // Sử dụng node "feeds/{feedKey}"
-            DatabaseReference feedRef = firebaseDbRef.child(key);
-            feedRef.setValueAsync(feedData);
+            return latestData;
         }
+
+        return null; // Trả về null nếu không có dữ liệu
+    }
+
+    /**
+     * Lấy dữ liệu từ Adafruit và lưu vào PostgreSQL & Firebase
+     */
+    public void fetchAndSaveData(String feedKey) {
+        // Gọi API để lấy dữ liệu từ "/feeds/{feedKey}/data"
+        Map<String, Object> latestData = getFeedData(feedKey);
+
+        if (latestData != null) {
+            String value = (String) latestData.get("value"); // Đảm bảo lấy đúng key
+            String timestampStr = (String) latestData.get("created_at"); // Adafruit lưu timestamp tại "created_at"
+
+            LocalDateTime timestamp;
+            // Kiểm tra nếu timestamp không hợp lệ, dùng thời gian hiện tại
+            if (timestampStr == null || timestampStr.trim().isEmpty()) {
+                timestamp = LocalDateTime.now();
+                timestampStr = timestamp.toString();
+                logger.warning("Timestamp không hợp lệ. Đặt mặc định là: " + timestampStr);
+            } else {
+                try {
+                    timestamp = java.time.OffsetDateTime.parse(timestampStr, DateTimeFormatter.ISO_DATE_TIME)
+                            .toLocalDateTime();
+                } catch (Exception e) {
+                    logger.severe("Lỗi parse timestamp: " + e.getMessage() + ". Đặt mặc định là thời gian hiện tại.");
+                    timestamp = LocalDateTime.now();
+                    timestampStr = timestamp.toString();
+                }
+            }
+
+            // Lưu vào PostgreSQL
+            SensorData sensorData = new SensorData();
+            sensorData.setName(feedKey);
+            sensorData.setKey(feedKey);
+            sensorData.setValue(value);
+            sensorData.setTimestamp(timestamp);
+            sensorDataRepository.save(sensorData);
+
+            // Lưu vào Firebase
+            saveToFirebase(feedKey, value, timestampStr);
+        } else {
+            logger.warning("Không có dữ liệu để lưu cho feed: " + feedKey);
+        }
+    }
+
+    private void saveToFirebase(String feedKey, String value, String timestamp) {
+        // Ensure value and timestamp are not null
+        if (value == null) {
+            value = "default_value"; // or handle it appropriately
+        }
+        if (timestamp == null) {
+            timestamp = LocalDateTime.now().toString(); // or handle it appropriately
+        }
+
+        firebaseDbRef.child(feedKey).push().setValueAsync(Map.of(
+                "value", value,
+                "timestamp", timestamp));
+    }
+
+    @Scheduled(fixedRate = 60000) // Chạy mỗi 60 giây
+    public void syncDataToFirebase() {
+        String[] feedKeys = { "device.lamp", "device.fan", "temp", "humidity", "light", "air", "device.door",
+                "device.status-fan", "device.status-lamp" }; // Các feed cần đồng bộ
+
+        for (String feedKey : feedKeys) {
+            Map<String, Object> latestData = getFeedData(feedKey);
+
+            if (latestData != null) {
+                String value = (String) latestData.get("value"); // Đảm bảo lấy đúng key
+                String timestamp = (String) latestData.get("created_at"); // Adafruit lưu timestamp tại "created_at"
+
+                if (timestamp == null || timestamp.trim().isEmpty()) {
+                    timestamp = LocalDateTime.now().toString();
+                }
+
+                // 🔥 Thay thế "." bằng "_" để tránh lỗi đường dẫn Firebase
+                String sanitizedFeedKey = feedKey.replace(".", "_");
+                if (value == null || timestamp == null) {
+                    logger.warning("Dữ liệu NULL từ Adafruit - feed: " + feedKey);
+                    return; // Bỏ qua nếu dữ liệu không hợp lệ
+                }
+                firebaseDbRef.child(sanitizedFeedKey).setValueAsync(Map.of(
+                        "value", value != null ? value : "N/A",
+                        "timestamp", timestamp != null ? timestamp : LocalDateTime.now().toString()));
+                logger.info("Đã cập nhật dữ liệu lên Firebase: " + sanitizedFeedKey + " = " + value);
+            } else {
+                logger.warning("Không lấy được dữ liệu từ Adafruit cho feed: " + feedKey);
+            }
+        }
+    }
+
+    public List<SensorData> getAllSensorData() {
+        return sensorDataRepository.findAll();
     }
 }
