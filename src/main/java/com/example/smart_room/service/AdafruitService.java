@@ -11,7 +11,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-
+import com.example.smart_room.config.ThresholdConfig;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -69,7 +69,7 @@ public class AdafruitService {
         return null; // Trả về null nếu không có dữ liệu
     }
 
-    /**
+    /*
      * Lấy dữ liệu từ Adafruit và lưu vào PostgreSQL & Firebase
      */
     public void fetchAndSaveData(String feedKey) {
@@ -85,18 +85,18 @@ public class AdafruitService {
             if (timestampStr == null || timestampStr.trim().isEmpty()) {
                 timestamp = LocalDateTime.now();
                 timestampStr = timestamp.toString();
-                logger.warning("Timestamp không hợp lệ. Đặt mặc định là: " + timestampStr);
+                logger.warning("Timestamp not suitable: " + timestampStr);
             } else {
                 try {
                     timestamp = java.time.OffsetDateTime.parse(timestampStr, DateTimeFormatter.ISO_DATE_TIME)
                             .toLocalDateTime();
                 } catch (Exception e) {
-                    logger.severe("Lỗi parse timestamp: " + e.getMessage() + ". Đặt mặc định là thời gian hiện tại.");
+                    logger.severe("error parse timestamp: " + e.getMessage() + ". default now.");
                     timestamp = LocalDateTime.now();
                     timestampStr = timestamp.toString();
                 }
             }
-
+            checkThreshold(feedKey, Double.parseDouble(value));
             // Lưu vào PostgreSQL
             SensorData sensorData = new SensorData();
             sensorData.setName(feedKey);
@@ -108,7 +108,7 @@ public class AdafruitService {
             // Lưu vào Firebase
             saveToFirebase(feedKey, value, timestampStr);
         } else {
-            logger.warning("Không có dữ liệu để lưu cho feed: " + feedKey);
+            logger.warning("no data for feed: " + feedKey);
         }
     }
 
@@ -126,37 +126,65 @@ public class AdafruitService {
                 "timestamp", timestamp));
     }
 
-    @Scheduled(fixedRate = 60000) // Chạy mỗi 60 giây
-    public void syncDataToFirebase() {
-        String[] feedKeys = { "device.lamp", "device.fan", "temp", "humidity", "light", "air", "device.door",
-                "device.status-fan", "device.status-lamp" }; // Các feed cần đồng bộ
+    private void checkThreshold(String feedKey, double value) {
+        if (ThresholdConfig.UPPER_LIMITS.containsKey(feedKey) &&
+                value > ThresholdConfig.UPPER_LIMITS.get(feedKey)) {
+            logger.warning("caution! " + feedKey + " high: " + value);
+            sendWarning(feedKey, "high value: " + value);
+        }
 
-        for (String feedKey : feedKeys) {
-            Map<String, Object> latestData = getFeedData(feedKey);
-
-            if (latestData != null) {
-                String value = (String) latestData.get("value"); // Đảm bảo lấy đúng key
-                String timestamp = (String) latestData.get("created_at"); // Adafruit lưu timestamp tại "created_at"
-
-                if (timestamp == null || timestamp.trim().isEmpty()) {
-                    timestamp = LocalDateTime.now().toString();
-                }
-
-                // 🔥 Thay thế "." bằng "_" để tránh lỗi đường dẫn Firebase
-                String sanitizedFeedKey = feedKey.replace(".", "_");
-                if (value == null || timestamp == null) {
-                    logger.warning("Dữ liệu NULL từ Adafruit - feed: " + feedKey);
-                    return; // Bỏ qua nếu dữ liệu không hợp lệ
-                }
-                firebaseDbRef.child(sanitizedFeedKey).setValueAsync(Map.of(
-                        "value", value != null ? value : "N/A",
-                        "timestamp", timestamp != null ? timestamp : LocalDateTime.now().toString()));
-                logger.info("Đã cập nhật dữ liệu lên Firebase: " + sanitizedFeedKey + " = " + value);
-            } else {
-                logger.warning("Không lấy được dữ liệu từ Adafruit cho feed: " + feedKey);
-            }
+        if (ThresholdConfig.LOWER_LIMITS.containsKey(feedKey) &&
+                value < ThresholdConfig.LOWER_LIMITS.get(feedKey)) {
+            logger.warning("caution! " + feedKey + " low: " + value);
+            sendWarning(feedKey, "low value: " + value);
         }
     }
+
+    private void sendWarning(String feedKey, String message) {
+        // Lưu cảnh báo vào Firebase
+        firebaseDbRef.child("alerts").push().setValueAsync(Map.of(
+                "feed", feedKey,
+                "message", message,
+                "timestamp", LocalDateTime.now().toString()));
+
+        // Bạn có thể thêm gửi thông báo qua Firebase Cloud Messaging (FCM) hoặc MQTT
+    }
+
+    // @Scheduled(fixedRate = 60000) // Chạy mỗi 60 giây
+    // public void syncDataToFirebase() {
+    // String[] feedKeys = { "device.lamp", "device.fan", "temp", "humidity",
+    // "light", "air", "device.door",
+    // "device.status-fan", "device.status-lamp" }; // Các feed cần đồng bộ
+
+    // for (String feedKey : feedKeys) {
+    // Map<String, Object> latestData = getFeedData(feedKey);
+
+    // if (latestData != null) {
+    // String value = (String) latestData.get("value"); // Đảm bảo lấy đúng key
+    // String timestamp = (String) latestData.get("created_at"); // Adafruit lưu
+    // timestamp tại "created_at"
+
+    // if (timestamp == null || timestamp.trim().isEmpty()) {
+    // timestamp = LocalDateTime.now().toString();
+    // }
+
+    // // 🔥 Thay thế "." bằng "_" để tránh lỗi đường dẫn Firebase
+    // String sanitizedFeedKey = feedKey.replace(".", "_");
+    // if (value == null || timestamp == null) {
+    // logger.warning("Dữ liệu NULL từ Adafruit - feed: " + feedKey);
+    // return; // Bỏ qua nếu dữ liệu không hợp lệ
+    // }
+    // firebaseDbRef.child(sanitizedFeedKey).setValueAsync(Map.of(
+    // "value", value != null ? value : "N/A",
+    // "timestamp", timestamp != null ? timestamp :
+    // LocalDateTime.now().toString()));
+    // logger.info("Đã cập nhật dữ liệu lên Firebase: " + sanitizedFeedKey + " = " +
+    // value);
+    // } else {
+    // logger.warning("Không lấy được dữ liệu từ Adafruit cho feed: " + feedKey);
+    // }
+    // }
+    // }
 
     public List<SensorData> getAllSensorData() {
         return sensorDataRepository.findAll();

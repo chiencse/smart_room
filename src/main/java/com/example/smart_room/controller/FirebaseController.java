@@ -14,6 +14,6 @@ public class FirebaseController {
     @PostMapping("/save")
     public String saveData(@RequestParam String sensorId, @RequestParam double value) {
         firebaseService.saveData(sensorId, value);
-        return "Dữ liệu đã được lưu vào Firebase!";
+        return "saved Firebase!";
     }
 }

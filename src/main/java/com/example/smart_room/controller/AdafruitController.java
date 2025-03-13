@@ -28,7 +28,7 @@ public class AdafruitController {
     public ResponseEntity<?> getFeeds() {
         List<Map<String, Object>> feeds = adafruitService.getAllFeeds();
         if (feeds == null || feeds.isEmpty()) {
-            return ResponseEntity.status(404).body("Không tìm thấy feeds nào từ Adafruit.");
+            return ResponseEntity.status(404).body("not found Adafruit.");
         }
         return ResponseEntity.ok(feeds);
     }
@@ -40,7 +40,7 @@ public class AdafruitController {
     public ResponseEntity<?> getFeedData(@PathVariable String feedKey) {
         Map<String, Object> feedData = adafruitService.getFeedData(feedKey);
         if (feedData == null) {
-            return ResponseEntity.status(404).body("Không tìm thấy dữ liệu cho feed: " + feedKey);
+            return ResponseEntity.status(404).body("not found feed data: " + feedKey);
         }
         return ResponseEntity.ok(feedData);
     }
@@ -56,7 +56,7 @@ public class AdafruitController {
         } catch (Exception e) {
             logger.severe("Error in fetchAndSaveData: " + e.getMessage());
             e.printStackTrace();
-            return ResponseEntity.internalServerError().body("Lỗi đồng bộ  liệu: " + e.getMessage());
+            return ResponseEntity.internalServerError().body("error sync: " + e.getMessage());
         }
     }
 
