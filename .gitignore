@@ -34,3 +34,4 @@ build/
 
 # Ignore the service account key file
 src/main/resources/serviceAccountKey.json
+src/main/resources/application.properties
