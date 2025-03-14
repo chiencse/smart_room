@@ -68,4 +68,11 @@ public class AdafruitController {
         List<SensorData> dataList = adafruitService.getAllSensorData();
         return ResponseEntity.ok(dataList);
     }
+
+    @PostMapping("/control")
+    public String controlDevice(@RequestParam String deviceKey, @RequestParam String value) {
+        Long timestamp = System.currentTimeMillis();
+        boolean success = adafruitService.sendCommandToDevice(deviceKey, value, timestamp);
+        return success ? "✅ Đã gửi lệnh thành công!" : "❌ Gửi lệnh thất bại!";
+    }
 }
