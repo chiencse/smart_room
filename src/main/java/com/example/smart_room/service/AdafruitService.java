@@ -9,6 +9,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.MediaType;
 import java.util.logging.Logger;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
@@ -162,35 +163,38 @@ public class AdafruitService {
         // Bạn có thể thêm gửi thông báo qua Firebase Cloud Messaging (FCM) hoặc MQTT
     }
 
-    @Scheduled(fixedRate = 60000) // Chạy mỗi 60 giây
-    public void syncDataToFirebase() {
-        String[] feedKeys = { "device.lamp", "device.fan", "temp", "humidity", "light", "air", "device.door",
-                "device.status-fan", "device.status-lamp" };
+    // @Scheduled(fixedRate = 60000) // Chạy mỗi 60 giây
+    // public void syncDataToFirebase() {
+    // String[] feedKeys = { "device.lamp", "device.fan", "temp", "humidity",
+    // "light", "air", "device.door",
+    // "device.status-fan", "device.status-lamp" };
 
-        for (String feedKey : feedKeys) {
-            Map<String, Object> latestData = getFeedData(feedKey);
+    // for (String feedKey : feedKeys) {
+    // Map<String, Object> latestData = getFeedData(feedKey);
 
-            if (latestData != null) {
-                String value = (String) latestData.get("value"); // Adafruit lưu giá trị tại last_value
-                String timestamp = (String) latestData.get("created_at"); // Thời gian lưu tại last_value_at
+    // if (latestData != null) {
+    // String value = (String) latestData.get("value"); // Adafruit lưu giá trị tại
+    // last_value
+    // String timestamp = (String) latestData.get("created_at"); // Thời gian lưu
+    // tại last_value_at
 
-                if (timestamp == null || timestamp.trim().isEmpty()) {
-                    timestamp = LocalDateTime.now().toString();
-                }
+    // if (timestamp == null || timestamp.trim().isEmpty()) {
+    // timestamp = LocalDateTime.now().toString();
+    // }
 
-                // Chuyển key thành định dạng hợp lệ (Firebase không hỗ trợ dấu '.')
-                String sanitizedFeedKey = feedKey.replace(".", "_");
+    // // Chuyển key thành định dạng hợp lệ (Firebase không hỗ trợ dấu '.')
+    // String sanitizedFeedKey = feedKey.replace(".", "_");
 
-                firebaseDbRef.child(sanitizedFeedKey).setValueAsync(Map.of(
-                        "value", value != null ? value : "N/A",
-                        "timestamp", timestamp));
+    // firebaseDbRef.child(sanitizedFeedKey).setValueAsync(Map.of(
+    // "value", value != null ? value : "N/A",
+    // "timestamp", timestamp));
 
-                logger.info("Updated Firebase: " + sanitizedFeedKey + " = " + value);
-            } else {
-                logger.warning("No data received from Adafruit for feed: " + feedKey);
-            }
-        }
-    }
+    // logger.info("Updated Firebase: " + sanitizedFeedKey + " = " + value);
+    // } else {
+    // logger.warning("No data received from Adafruit for feed: " + feedKey);
+    // }
+    // }
+    // }
 
     public List<SensorData> getAllSensorData() {
         return sensorDataRepository.findAll();
@@ -199,27 +203,31 @@ public class AdafruitService {
     public boolean sendCommandToDevice(String deviceKey, String value, Long userId) {
         try {
             String url = adafruitBaseUrl + "/feeds/" + deviceKey + "/data";
+
             HttpHeaders headers = new HttpHeaders();
             headers.set("X-AIO-Key", adafruitApiKey);
-            headers.set("Content-Type", "application/json");
+            headers.setContentType(MediaType.APPLICATION_JSON);
 
-            String jsonBody = "{\"value\": \"" + value + "\"}";
-            HttpEntity<String> request = new HttpEntity<>(jsonBody, headers);
+            // 🟢 Sử dụng Map thay vì String JSON để tránh lỗi escape
+            Map<String, String> body = Map.of("value", value);
+            HttpEntity<Map<String, String>> request = new HttpEntity<>(body, headers);
+
             ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, request, String.class);
 
             if (response.getStatusCode().is2xxSuccessful()) {
-                logger.info("✅ Gửi lệnh thành công: " + deviceKey + " -> " + value);
+                logger.info(" command success: " + deviceKey + " -> " + value);
 
                 // 🌟 Lưu vào Log Activity
                 ActivityLog log = new ActivityLog("COMMAND", value, userId, deviceKey);
                 activityLogRepository.save(log);
+
                 return true;
             } else {
-                logger.warning("⚠️ Lỗi khi gửi lệnh: " + response.getStatusCode());
+                logger.warning("fail to command: " + response.getStatusCode() + " | Body: " + response.getBody());
                 return false;
             }
         } catch (Exception e) {
-            logger.severe("❌ Lỗi gửi lệnh: " + e.getMessage());
+            logger.severe("fail command: " + e.getMessage());
             return false;
         }
     }
