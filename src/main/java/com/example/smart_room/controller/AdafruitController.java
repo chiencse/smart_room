@@ -3,6 +3,7 @@ package com.example.smart_room.controller;
 import com.example.smart_room.model.SensorData;
 import com.example.smart_room.service.AdafruitService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -69,10 +70,14 @@ public class AdafruitController {
         return ResponseEntity.ok(dataList);
     }
 
-    @PostMapping("/control")
-    public String controlDevice(@RequestParam String deviceKey, @RequestParam String value) {
-        Long timestamp = System.currentTimeMillis();
-        boolean success = adafruitService.sendCommandToDevice(deviceKey, value, timestamp);
-        return success ? "✅ Đã gửi lệnh thành công!" : "❌ Gửi lệnh thất bại!";
+    @PostMapping("/command")
+    public ResponseEntity<String> sendCommand(@RequestParam String deviceKey,
+            @RequestParam String value) {
+        boolean success = adafruitService.sendCommandToDevice(deviceKey, value, 1L);
+        if (success) {
+            return ResponseEntity.ok("Command sent successfully to " + deviceKey);
+        } else {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Failed to send command");
+        }
     }
 }
