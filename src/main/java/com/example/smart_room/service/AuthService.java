@@ -54,10 +54,22 @@ public class AuthService {
         return jwtUtil.generateToken(username);
     }
 
-    // public User register(User user) {
-    // user.setHash_password(passwordEncoder.encode(user.getHash_password()));
-    // return userRepository.save(user);
-    // }
+     public void register(User user) {
+         if (userRepository.findByUsername(user.getUsername()) != null) {
+             throw new IllegalArgumentException("Username has been existed");
+         }
+
+         if (userRepository.findByEmail(user.getEmail()).isPresent()) {
+             throw new IllegalArgumentException("Email has been existed");
+         }
+
+         if (userRepository.findByPhoneNumber(user.getPhoneNumber()) != null) {
+             throw new IllegalArgumentException("Phone number has been existed");
+         }
+
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        userRepository.save(user);
+     }
 
     public String getGoogleAuthUrl() {
         return "https://accounts.google.com/o/oauth2/auth" +
