@@ -1,6 +1,8 @@
 package com.example.smart_room.controller;
 
+import com.example.smart_room.model.User;
 import com.example.smart_room.request.LoginRequestDto;
+import com.example.smart_room.request.RegisterRequestDto;
 import com.example.smart_room.response.ApiResponse;
 import com.example.smart_room.response.JwtResponse;
 import com.example.smart_room.security.JwtUtil;
@@ -20,6 +22,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -80,6 +83,25 @@ public class AuthController {
         }
     }
 
+
+    @PostMapping("/register")
+    public ResponseEntity<ApiResponse> registerUser(@RequestBody RegisterRequestDto registerRequest) {
+        try {
+            User user = new User();
+
+            user.setUsername(registerRequest.getUsername());
+            user.setPassword(registerRequest.getPassword());
+            user.setEmail(registerRequest.getEmail());
+            user.setPhoneNumber(registerRequest.getPhoneNumber());
+
+            authService.register(user);
+
+            return ResponseEntity.ok(new ApiResponse<>(200, "Register successfully", null));
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse<>(400, ex.getMessage(), null));
+        }
+    }
 
 
     @GetMapping("/google/login")
