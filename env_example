@@ -1,0 +1,9 @@
+
+#Database Postgres
+DB_USERNAME = 'postgres'
+DB_PASSWORD = 'hello'
+DB_NAME = 'smartRoom'
+DB_PORT = 5433
+
+app.jwt.secret=yourSecretKey
+app.jwt.expirationMs=86400000  # 24 hours
