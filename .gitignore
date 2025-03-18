@@ -239,3 +239,5 @@ README.html
 
 src/main/resources/serviceAccountKey.json
 src/main/resources/application.properties
+
+paho*
