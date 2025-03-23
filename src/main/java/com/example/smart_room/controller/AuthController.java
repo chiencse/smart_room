@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -27,6 +28,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/auth")
@@ -70,7 +72,7 @@ public class AuthController {
             UserDetails userDetails = userDetailsService.loadUserByUsername(loginRequest.getUsername());
 
             // Generate JWT token
-            String jwt = jwtUtil.generateToken(userDetails.getUsername());
+            String jwt = jwtUtil.generateToken((User) userDetails);
 
             return ResponseEntity.ok(new ApiResponse<>(200, "Login successful", new JwtResponse(jwt, userDetails.getUsername())));
 
@@ -83,25 +85,29 @@ public class AuthController {
         }
     }
 
+        @SecurityRequirement(name = "bearerAuth")
+        @PreAuthorize("hasRole('ADMIN')")
+        @PostMapping("/register")
+        public ResponseEntity<ApiResponse> registerUser(@RequestBody RegisterRequestDto registerRequest) {
+            try {
+                User user = new User();
 
-    @PostMapping("/register")
-    public ResponseEntity<ApiResponse> registerUser(@RequestBody RegisterRequestDto registerRequest) {
-        try {
-            User user = new User();
+                user.setUsername(registerRequest.getUsername());
+                user.setPassword(registerRequest.getPassword());
+                user.setEmail(registerRequest.getEmail());
+                user.setPhoneNumber(registerRequest.getPhoneNumber());
 
-            user.setUsername(registerRequest.getUsername());
-            user.setPassword(registerRequest.getPassword());
-            user.setEmail(registerRequest.getEmail());
-            user.setPhoneNumber(registerRequest.getPhoneNumber());
+                user.setRoles(Set.of("ADMIN"));
 
-            authService.register(user);
 
-            return ResponseEntity.ok(new ApiResponse<>(200, "Register successfully", null));
-        } catch (IllegalArgumentException ex) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ApiResponse<>(400, ex.getMessage(), null));
+                authService.register(user);
+
+                return ResponseEntity.ok(new ApiResponse<>(200, "Register successfully", null));
+            } catch (IllegalArgumentException ex) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(new ApiResponse<>(400, ex.getMessage(), null));
+            }
         }
-    }
 
 
     @GetMapping("/google/login")
