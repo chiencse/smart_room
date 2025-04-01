@@ -37,13 +37,13 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
         System.out.println("Email: " + email + " Name: " + name);
 
         // Kiểm tra nếu user chưa tồn tại thì lưu vào database
-        Optional<User> existingUser = userRepository.findByEmail(email);
-        if (existingUser.isEmpty()) {
+        User existingUser = userRepository.findByEmail(email);
+        if (existingUser == null) {
             System.out.println("User not found, creating new user");
         }
 
         // Tạo JWT Token
-        String jwtToken = jwtUtil.generateToken(email);
+        String jwtToken = jwtUtil.generateToken(existingUser);
 
         System.out.println("Token: " + jwtToken  );
         // Trả token về client

@@ -51,7 +51,8 @@ public class AuthService {
 
     public String login(String username, String password) {
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
-        return jwtUtil.generateToken(username);
+        User user = this.userRepository.findByUsername(username);
+        return jwtUtil.generateToken(user);
     }
 
      public void register(User user) {
@@ -59,7 +60,7 @@ public class AuthService {
              throw new IllegalArgumentException("Username has been existed");
          }
 
-         if (userRepository.findByEmail(user.getEmail()).isPresent()) {
+         if (userRepository.findByEmail(user.getEmail()) != null) {
              throw new IllegalArgumentException("Email has been existed");
          }
 
@@ -104,12 +105,12 @@ public class AuthService {
         String email = (String) userResponse.getBody().get("email");
         String name = (String) userResponse.getBody().get("name");
 
-        Optional<User> user = userRepository.findByEmail(email);
-        if (user.isEmpty()) {
+        User user = userRepository.findByEmail(email);
+        if (user == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found");
         }
 
-        return jwtUtil.generateToken(user.get().getUsername());
+        return jwtUtil.generateToken(user);
     }
 
     @Service
@@ -120,7 +121,6 @@ public class AuthService {
 
         @Override
         public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-            System.out.println("Get Username" + username);
             User user = userRepository.findByUsername(username);
             System.out.println(user);
             if (user == null) {

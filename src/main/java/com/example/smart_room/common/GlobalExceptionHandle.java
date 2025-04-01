@@ -3,6 +3,7 @@ package com.example.smart_room.common;
 import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 
@@ -23,6 +24,11 @@ public class GlobalExceptionHandle {
     @ExceptionHandler(SecurityException.class)
     public ResponseEntity<Object> handleUnauthorizedException(SecurityException ex) {
         return buildResponseEntity(HttpStatus.UNAUTHORIZED, "Unauthorized: " + ex.getMessage());
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<Object> handleAccessDeniedException(AccessDeniedException ex) {
+        return buildResponseEntity(HttpStatus.FORBIDDEN, "Access Denied: " + ex.getMessage());
     }
 
 

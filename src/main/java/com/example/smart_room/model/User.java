@@ -37,12 +37,12 @@ public class User implements UserDetails {
     @ElementCollection(fetch = FetchType.EAGER) // Load roles with user
     @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "role")
-    private Set<String> roles; // Example: ["ROLE_USER", "ROLE_ADMIN"]
+    private Set<String> roles;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return roles.stream()
-                .map(SimpleGrantedAuthority::new)
+                .map(role -> new SimpleGrantedAuthority("ROLE_" + role)) // Add ROLE_ prefix
                 .collect(Collectors.toList());
     }
 
