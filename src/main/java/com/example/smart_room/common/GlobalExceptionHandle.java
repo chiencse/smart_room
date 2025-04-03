@@ -4,10 +4,10 @@ import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -22,12 +22,13 @@ public class GlobalExceptionHandle {
 
 
     @ExceptionHandler(SecurityException.class)
-    public ResponseEntity<Object> handleUnauthorizedException(SecurityException ex) {
+    public ResponseEntity<Object> handleUnauthorizedException(AuthenticationException ex) {
         return buildResponseEntity(HttpStatus.UNAUTHORIZED, "Unauthorized: " + ex.getMessage());
     }
 
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<Object> handleAccessDeniedException(AccessDeniedException ex) {
+        System.out.println("Access Denied: " + ex.getMessage());
         return buildResponseEntity(HttpStatus.FORBIDDEN, "Access Denied: " + ex.getMessage());
     }
 

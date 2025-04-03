@@ -5,6 +5,7 @@ import com.example.smart_room.model.User;
 import com.example.smart_room.request.ControlDeviceRequestDto;
 import com.example.smart_room.service.AdafruitService;
 import com.example.smart_room.service.UserService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +17,7 @@ import java.util.logging.Logger;
 
 @RestController
 @RequestMapping("/api/adafruit")
+@SecurityRequirement(name = "bearerAuth")
 public class AdafruitController {
 
     @Autowired
@@ -32,6 +34,7 @@ public class AdafruitController {
     /**
      * API lấy danh sách tất cả các feeds từ Adafruit IO
      */
+
     @GetMapping("/feeds")
     public ResponseEntity<?> getFeeds() {
         List<Map<String, Object>> feeds = adafruitService.getAllFeeds();
