@@ -15,19 +15,19 @@ public class ActivityLog {
     private String type;
     private String value;
     private Long userId;
-    private String deviceId;
+    private String deviceKey;
 
     public ActivityLog() {
         this.time = LocalDateTime.now(); // Mặc định là thời gian hiện tại
     }
 
     // Constructor
-    public ActivityLog(String type, String value, Long userId, String deviceId) {
+    public ActivityLog(String type, String value, Long userId, String deviceKey) {
         this.time = LocalDateTime.now();
         this.type = type;
         this.value = value;
         this.userId = userId;
-        this.deviceId = deviceId;
+        this.deviceKey = deviceKey;
     }
 
     // Getters & Setters
@@ -51,8 +51,8 @@ public class ActivityLog {
         return userId;
     }
 
-    public String getDeviceId() {
-        return deviceId;
+    public String getdeviceKey() {
+        return deviceKey;
     }
 
     public void setId(Long id) {
@@ -75,7 +75,7 @@ public class ActivityLog {
         this.userId = userId;
     }
 
-    public void setDeviceId(String deviceId) {
-        this.deviceId = deviceId;
+    public void setdeviceKey(String deviceKey) {
+        this.deviceKey = deviceKey;
     }
 }
