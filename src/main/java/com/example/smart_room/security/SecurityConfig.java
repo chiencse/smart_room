@@ -1,9 +1,12 @@
 package com.example.smart_room.security;
 
+import com.example.smart_room.common.GlobalExceptionHandle;
 import com.example.smart_room.service.OAuth2LoginSuccessHandler;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
@@ -51,6 +54,15 @@ public class SecurityConfig {
                         .requestMatchers("/user/**").hasAnyRole("USER", "ADMIN")
                         .anyRequest().authenticated()
 
+                )
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            GlobalExceptionHandle globalExceptionHandler = new GlobalExceptionHandle();
+                            ResponseEntity<Object> responseEntity = globalExceptionHandler.handleUnauthorizedException(authException);
+                            response.setStatus(responseEntity.getStatusCode().value());
+                            response.setContentType("application/json");
+                            response.getWriter().write(responseEntity.getBody().toString());
+                        })
                 )
                 .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
 
