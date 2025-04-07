@@ -26,7 +26,10 @@ public class Strategy {
     @Column()
     private String status;
 
-    @OneToMany(mappedBy = "strategy", cascade = CascadeType.ALL)
-    @JsonManagedReference
+    @Column
+    private String startTime;
+
+    @OneToMany(mappedBy = "strategy", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference("strategy-device")
     private List<StrategyDevice> strategyDevices;
 }

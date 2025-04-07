@@ -8,12 +8,14 @@ import com.example.smart_room.repository.StrategyDeviceRepository;
 import com.example.smart_room.repository.StrategyRepository;
 import com.example.smart_room.request.DeviceStrategyDTO;
 import com.example.smart_room.request.DeviceValueDTO;
+import com.example.smart_room.response.DeviceStrategyResponseDTO;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -24,9 +26,33 @@ public class DeviceService {
     @Autowired
     private DeviceRepository deviceRepository;
 
-    public List<Strategy> getAllStrategies() {
-        return strategyRepository.findAll();
+    public List<DeviceStrategyResponseDTO> getAllDeviceStrategyResponses() {
+        List<Strategy> strategies = strategyRepository.findAll();
+
+        return strategies.stream().map(strategy -> {
+            DeviceStrategyResponseDTO dto = new DeviceStrategyResponseDTO();
+            dto.setName(strategy.getName());
+            dto.setId(strategy.getId());
+            dto.setDescription(strategy.getDescription());
+            dto.setStatus(strategy.getStatus());
+            dto.setStartTime(null); // If you add a startTime to the entity later
+
+            List<DeviceStrategyResponseDTO.DeviceInStrategyDTO> devices = strategy.getStrategyDevices().stream().map(sd -> {
+                Device device = sd.getDevice();
+                return new DeviceStrategyResponseDTO.DeviceInStrategyDTO(
+                        device.getId(),
+                        device.getName(),
+                        device.getType(),
+                        device.getStatus().name(),
+                        sd.getValue()
+                );
+            }).collect(Collectors.toList());
+
+            dto.setListDeviceValues(devices);
+            return dto;
+        }).collect(Collectors.toList());
     }
+
 
     @Transactional
     public Strategy createStrategy(DeviceStrategyDTO dto) {
@@ -34,6 +60,7 @@ public class DeviceService {
         strategy.setName(dto.getName());
         strategy.setDescription(dto.getDescription());
         strategy.setStatus(dto.getStatus());
+        strategy.setStartTime(dto.getStartTime());
 
         if (dto.getListDeviceValues() != null) {
             @NotNull List<StrategyDevice> strategyDevices = dto.getListDeviceValues().stream()
@@ -61,28 +88,49 @@ public class DeviceService {
         strategy.setName(dto.getName());
         strategy.setDescription(dto.getDescription());
         strategy.setStatus(dto.getStatus());
+        strategy.setStartTime(dto.getStartTime());
 
-        // Remove existing strategy devices
-        strategy.getStrategyDevices().clear();
+        // Step 1: Collect updated device IDs
+        List<Long> updatedDeviceIds = dto.getListDeviceValues().stream()
+                .map(DeviceValueDTO::getDeviceId)
+                .collect(Collectors.toList());
 
-        // Add new strategy devices
+        List<StrategyDevice> strategyDevices = strategy.getStrategyDevices();
+        System.out.println("Before" + strategyDevices.size());
+        strategyDevices.removeIf(strategyDevice -> !updatedDeviceIds.contains(strategyDevice.getDevice().getId()));
+
+        System.out.println("Remive" + strategyDevices.size());
+        // Step 3: Add or update devices
         if (dto.getListDeviceValues() != null) {
-            List<StrategyDevice> strategyDevices = dto.getListDeviceValues().stream()
-                    .map(deviceDto -> {
-                        Device device = deviceRepository.findById(deviceDto.getDeviceId())
-                                .orElseThrow(() -> new RuntimeException("Device not found"));
-                        StrategyDevice strategyDevice = new StrategyDevice();
-                        strategyDevice.setStrategy(strategy);
-                        strategyDevice.setDevice(device);
-                        strategyDevice.setValue(deviceDto.getValue());
-                        return strategyDevice;
-                    })
-                    .collect(Collectors.toList());
-            strategy.setStrategyDevices(strategyDevices);
-        }
+            for (DeviceValueDTO deviceDto : dto.getListDeviceValues()) {
+                Device device = deviceRepository.findById(deviceDto.getDeviceId())
+                        .orElseThrow(() -> new RuntimeException("Device not found"));
 
+                // Check if the device is already associated with the strategy
+                Optional<StrategyDevice> existingStrategyDeviceOpt = strategyDevices.stream()
+                        .filter(strategyDevice -> strategyDevice.getDevice().getId().equals(deviceDto.getDeviceId()))
+                        .findFirst();
+
+                if (existingStrategyDeviceOpt.isPresent()) {
+                    // If the device exists, update its value
+                    StrategyDevice existingStrategyDevice = existingStrategyDeviceOpt.get();
+                    existingStrategyDevice.setValue(deviceDto.getValue());
+                } else {
+                    // If the device doesn't exist, create a new association
+                    StrategyDevice newStrategyDevice = new StrategyDevice();
+                    newStrategyDevice.setStrategy(strategy);
+                    newStrategyDevice.setDevice(device);
+                    newStrategyDevice.setValue(deviceDto.getValue());
+                    strategyDevices.add(newStrategyDevice);  // Add the new device association
+                }
+            }
+        }
+        System.out.println(strategy.getStrategyDevices().size());
+        // Save the updated strategy with all associated devices
         return strategyRepository.save(strategy);
     }
+
+
 
     @Transactional
     public void deleteStrategy(Long id) {
