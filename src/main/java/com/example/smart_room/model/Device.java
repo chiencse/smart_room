@@ -37,8 +37,9 @@ public class Device {
     private String roomId;
 
     @OneToMany(mappedBy = "device", cascade = CascadeType.ALL)
-    @JsonManagedReference
+    @JsonManagedReference("device-strategy")
     private List<StrategyDevice> strategyDevices;
+
 
     public enum Status {
         ON,

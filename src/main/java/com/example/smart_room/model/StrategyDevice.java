@@ -18,13 +18,13 @@ public class StrategyDevice {
 
     @ManyToOne
     @JoinColumn(name = "strategy_id", referencedColumnName = "id")
-    @JsonBackReference
-    private Strategy strategy;  // Reference the Strategy entity
+    @JsonBackReference("strategy-device")
+    private Strategy strategy;
 
     @ManyToOne
     @JoinColumn(name = "device_id", referencedColumnName = "id")
-    @JsonBackReference
-    private Device device;  // Reference the Device entity
+    @JsonBackReference("device-strategy")
+    private Device device;
 
     @Column()
     private String value;

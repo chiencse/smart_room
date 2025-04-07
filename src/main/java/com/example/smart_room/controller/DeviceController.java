@@ -4,6 +4,7 @@ import com.example.smart_room.model.Device;
 import com.example.smart_room.model.Strategy;
 import com.example.smart_room.request.DeviceStrategyDTO;
 import com.example.smart_room.response.ApiResponse;
+import com.example.smart_room.response.DeviceStrategyResponseDTO;
 import com.example.smart_room.service.DeviceService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,10 +30,10 @@ public class DeviceController {
     }
 
     @GetMapping("/strategy")
-    public ApiResponse<List<Strategy>> getAllStrategies() {
+    public ApiResponse<List<DeviceStrategyResponseDTO>> getAllStrategies() {
         try {
 
-            return new ApiResponse<>(200, "Strategies retrieved successfully", deviceService.getAllStrategies());
+            return new ApiResponse<>(200, "Strategies retrieved successfully", deviceService.getAllDeviceStrategyResponses());
         } catch (Exception e) {
             return new ApiResponse<>(400, "Failed to retrieve strategies: " + e.getMessage(), null);
         }
