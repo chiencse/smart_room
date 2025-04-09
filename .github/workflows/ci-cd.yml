@@ -1,81 +1,71 @@
 name: 🚀 Deploy Spring Boot via Docker Compose
 
 on:
-  workflow_dispatch:  # Cho phép chạy thủ công từ UI GitHub
-    inputs:
-      action:
-        description: "Chọn hành động cần thực hiện"
-        required: true
-        default: "deploy"
-        type: choice
-        options:
-          - build-and-push
-          - deploy
+  push:
+    branches: [deploy]
 
 env:
   IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/smartroom-app
 
 jobs:
   build-and-push:
-    if: ${{ github.event.inputs.action == 'build-and-push' }}
-    name: 🔨 Build and Push Docker Image
+    name:  Build and Push Docker Image
     runs-on: ubuntu-latest
 
     steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v3
+    - name:  Checkout code
+      uses: actions/checkout@v3
 
-      - name: 🔐 Login to GHCR
-        run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ secrets.GHCR_USERNAME }} --password-stdin
+    - name:  Login to GHCR
+      run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ secrets.GHCR_USERNAME }} --password-stdin
 
-      - name: 🐳 Build image
-        run: docker build -t $IMAGE_NAME:latest .
+    - name:  Build image
+      run: docker build -t $IMAGE_NAME:latest .
 
-      - name: 📤 Push image
-        run: docker push $IMAGE_NAME:latest
+    - name: 📤 Push image
+      run: docker push $IMAGE_NAME:latest
 
   deploy:
-    if: ${{ github.event.inputs.action == 'deploy' }}
-    name: 🚀 Deploy
+    name:  Deploy 
     runs-on: ubuntu-latest
+    needs: build-and-push
 
     steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v3
+    - name:  Checkout code  # Add this step to get the branch files
+      uses: actions/checkout@v3
 
-      - name: 📝 Tạo tệp secret cục bộ
-        run: |
-          echo "${{ secrets.ENV_FILE }}" > .env
-          echo "${{ secrets.SERVICE_ACCOUNT_JSON }}" > serviceAccountKey.json
+    - name:  Tạo tệp secret cục bộ
+      run: |
+        echo "${{ secrets.ENV_FILE }}" > .env
+        echo "${{ secrets.SERVICE_ACCOUNT_JSON }}" > serviceAccountKey.json
 
-      - name: 📤 Copy file lên EC2
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          source: |
-            .env
-            serviceAccountKey.json
-            docker-compose-staging.yml
-          target: /home/${{ secrets.EC2_USER }}/smartroom-deploy
+    - name:  Copy file lên EC2
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        source: ".env,serviceAccountKey.json,docker-compose-staging.yml"
+        target: /home/${{ secrets.EC2_USER }}/smartroom-deploy
 
-      - name: 🔐 SSH và triển khai Docker Compose
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          envs: GHCR_TOKEN,GHCR_USERNAME,IMAGE_NAME
-          script: |
-            cd /home/${{ secrets.EC2_USER }}/smartroom-deploy
-            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin
-            
-            docker compose -f docker-compose-staging.yml down
-            docker rmi $IMAGE_NAME:latest || true
-            docker compose -f docker-compose-staging.yml pull
-            docker compose -f docker-compose-staging.yml up -d
-        env:
-          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
-          GHCR_USERNAME: ${{ secrets.GHCR_USERNAME }}
-          IMAGE_NAME: ${{ env.IMAGE_NAME }}
+    - name: 🔐 SSH và triển khai Docker Compose
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        envs: GHCR_TOKEN,GHCR_USERNAME,IMAGE_NAME  # Pass secrets as environment variables
+        script: |
+          pwd
+          cd /home/${{ secrets.EC2_USER }}/smartroom-deploy
+          pwd
+          echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin
+          
+          docker compose -f docker-compose-staging.yml down
+          docker rmi $IMAGE_NAME:latest || true
+          docker compose -f docker-compose-staging.yml pull
+          docker compose -f docker-compose-staging.yml up -d
+      env:
+        GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+        GHCR_USERNAME: ${{ secrets.GHCR_USERNAME }}
+        IMAGE_NAME: ${{ env.IMAGE_NAME }}
