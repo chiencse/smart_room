@@ -2,7 +2,7 @@ name:  Deploy Spring Boot via Docker Compose
 
 on:
   push:
-    branches: [main]
+    branches: [deploy]
 
 env:
   IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/smartroom-app
