@@ -35,8 +35,6 @@ jobs:
       run: |
         echo "${{ secrets.ENV_FILE }}" > .env
         echo "${{ secrets.SERVICE_ACCOUNT_JSON }}" > serviceAccountKey.json
-        echo "Show all file"
-        ls -la
 
     - name: 📤 Copy file lên EC2
       uses: appleboy/scp-action@v0.1.7
