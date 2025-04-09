@@ -42,9 +42,7 @@ jobs:
         host: ${{ secrets.EC2_HOST }}
         username: ${{ secrets.EC2_USER }}
         key: ${{ secrets.EC2_SSH_KEY }}
-        source: |
-          .env
-          serviceAccountKey.json
+        source: ".env,serviceAccountKey.json"
         target: /home/${{ secrets.EC2_USER }}/smartroom-deploy
 
     - name: 🔐 SSH và triển khai Docker Compose
