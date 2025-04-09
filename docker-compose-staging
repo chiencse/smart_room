@@ -2,7 +2,7 @@ version: '3.9'
 
 services:
   app:
-    image: ghcr.io/${GHCR_USERNAME}/smartroom-app:latest  # image được push từ GH Actions
+    image: ghcr.io/${GHCR_USERNAME}/smartroom-app:latest
     container_name: smartroom_app
     depends_on:
       - postgres
@@ -16,6 +16,8 @@ services:
       SPRING_JPA_SHOW_SQL: "true"
     ports:
       - "8080:8080"
+    volumes:
+      - ./serviceAccountKey.json:/app/src/main/resources/serviceAccountKey.json
     restart: unless-stopped
 
   postgres:
