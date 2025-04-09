@@ -42,7 +42,10 @@ jobs:
         host: ${{ secrets.EC2_HOST }}
         username: ${{ secrets.EC2_USER }}
         key: ${{ secrets.EC2_SSH_KEY }}
-        source: ".env,serviceAccountKey.json,docker-compose-staging"
+        source: |
+          .env
+          serviceAccountKey.json
+          docker-compose-staging.yml
         target: /home/${{ secrets.EC2_USER }}/smartroom-deploy
 
     - name: 🔐 SSH và triển khai Docker Compose
@@ -53,10 +56,10 @@ jobs:
         key: ${{ secrets.EC2_SSH_KEY }}
         script: |
           cd /home/${{ secrets.EC2_USER }}/smartroom-deploy
-
+    
           echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ secrets.GHCR_USERNAME }} --password-stdin
           
-          docker-compose down
+          docker compose -f docker-compose-staging.yml down
           docker rmi $IMAGE_NAME:latest || true
-          docker-compose pull
-          docker-compose up -d
+          docker compose -f docker-compose-staging.yml pull
+          docker compose -f docker-compose-staging.yml up -d
