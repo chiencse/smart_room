@@ -31,7 +31,7 @@ services:
       - app-network
 
   postgres:
-    image: postgres:15  # Upgrade to newer version
+    image: postgres:14
     container_name: postgres_sm_room
     env_file:
       - .env
