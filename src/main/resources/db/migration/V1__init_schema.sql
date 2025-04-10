@@ -8,6 +8,10 @@ CREATE TABLE "User" (
     role VARCHAR(50)
 );
 
+CREATE TABLE "Sensor" (
+    id SERIAL PRIMARY KEY,
+    type VARCHAR(100) NOT NULL
+);
 -- Tạo bảng Device
 CREATE TABLE "Device" (
     id SERIAL PRIMARY KEY,
@@ -18,10 +22,6 @@ CREATE TABLE "Device" (
 );
 
 -- Tạo bảng Sensor
-CREATE TABLE "Sensor" (
-    id SERIAL PRIMARY KEY,
-    type VARCHAR(100) NOT NULL
-);
 
 -- Tạo bảng Env_param (Lưu dữ liệu cảm biến)
 CREATE TABLE "Env_param" (

@@ -13,9 +13,9 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${DB_NAME}
       SPRING_DATASOURCE_USERNAME: ${DB_USERNAME}
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
-      SPRING_JPA_HIBERNATE_DDL_AUTO: none  # Rely on Flyway for schema management
-      SPRING_JPA_SHOW_SQL: "false"  # Disable for staging
-      SPRING_FLYWAY_ENABLED: "true"  # Explicitly enable Flyway
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update  # Enable Hibernate schema updates
+      SPRING_JPA_SHOW_SQL: "false"           # Optional: Set to "true" for debugging
+      SPRING_FLYWAY_ENABLED: "false"
     ports:
       - "8090:8090"  # Align with application.properties server.port
     volumes:
@@ -31,7 +31,7 @@ services:
       - app-network
 
   postgres:
-    image: postgres:15  # Upgrade to newer version
+    image: postgres:14  # Upgrade to newer version
     container_name: postgres_sm_room
     env_file:
       - .env
