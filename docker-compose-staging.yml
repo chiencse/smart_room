@@ -17,9 +17,9 @@ services:
       SPRING_JPA_SHOW_SQL: "false"           # Optional: Set to "true" for debugging
       SPRING_FLYWAY_ENABLED: "false"
     ports:
-      - "8090:8090"  # Align with application.properties server.port
+      - "8090:8090"
     volumes:
-      - ./serviceAccountKey.json:/app/serviceAccountKey.json  # Adjusted path, verify with app
+      - ./serviceAccountKey.json:/app/src/main/resources/serviceAccountKey.json
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8090/actuator/health"]
       interval: 30s
