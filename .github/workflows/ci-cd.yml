@@ -37,10 +37,6 @@ jobs:
     - name: Tạo tệp secret cục bộ
       run: |
         echo "${{ secrets.ENV_FILE }}" > .env
-        # Use printf to preserve JSON formatting and avoid extra quotes
-        printf '%s\n' "${{ secrets.SERVICE_ACCOUNT_JSON }}" > serviceAccountKey.json
-        # Validate JSON format (optional, requires jq)
-        jq . serviceAccountKey.json || echo "Invalid JSON detected"
 
     - name:  Copy file lên EC2
       uses: appleboy/scp-action@v0.1.7
@@ -48,7 +44,7 @@ jobs:
         host: ${{ secrets.EC2_HOST }}
         username: ${{ secrets.EC2_USER }}
         key: ${{ secrets.EC2_SSH_KEY }}
-        source: ".env,serviceAccountKey.json,docker-compose-staging.yml"
+        source: ".env,docker-compose-staging.yml"
         target: /home/${{ secrets.EC2_USER }}/smartroom-deploy
 
     - name: 🔐 SSH và triển khai Docker Compose
