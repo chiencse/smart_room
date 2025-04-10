@@ -6,6 +6,7 @@ on:
 
 env:
   IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/smartroom-app
+  COMMIT_SHA: ${{ github.sha }}
 
 jobs:
   build-and-push:
@@ -20,8 +21,11 @@ jobs:
       run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ secrets.GHCR_USERNAME }} --password-stdin
 
     - name:  Build image
-      run: docker build -t $IMAGE_NAME:latest .
+      run: docker build -t $IMAGE_NAME:$COMMIT_SHA .
 
+    - name: 📤 Push image
+      run: docker push $IMAGE_NAME:$COMMIT_SHA
+    
     - name: 📤 Push image
       run: docker push $IMAGE_NAME:latest
 
