@@ -17,7 +17,7 @@ public class FirebaseConfig {
     private static final Logger logger = Logger.getLogger(FirebaseConfig.class.getName());
 
         @Value("${FIREBASE_SERVICE_ACCOUNT_KEY_PATH:src/main/resources/serviceAccountKey.json}")
-        private String serviceAccountPath = "src/main/resources/serviceAccountKey.json";
+        private String serviceAccountPath ;
     @Bean
     public FirebaseApp firebaseApp() throws IOException {
         logger.info("Initializing Firebase with service account key: " + serviceAccountPath);
