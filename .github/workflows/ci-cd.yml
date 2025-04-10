@@ -34,10 +34,13 @@ jobs:
     - name:  Checkout code  # Add this step to get the branch files
       uses: actions/checkout@v3
 
-    - name:  Tạo tệp secret cục bộ
+    - name: Tạo tệp secret cục bộ
       run: |
         echo "${{ secrets.ENV_FILE }}" > .env
-        echo "${{ secrets.SERVICE_ACCOUNT_JSON }}" > serviceAccountKey.json
+        # Use printf to preserve JSON formatting and avoid extra quotes
+        printf '%s\n' "${{ secrets.SERVICE_ACCOUNT_JSON }}" > serviceAccountKey.json
+        # Validate JSON format (optional, requires jq)
+        jq . serviceAccountKey.json || echo "Invalid JSON detected"
 
     - name:  Copy file lên EC2
       uses: appleboy/scp-action@v0.1.7
