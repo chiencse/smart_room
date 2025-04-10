@@ -25,10 +25,6 @@ jobs:
 
     - name: Run Maven tests with H2
       run: mvn clean test -Dspring.profiles.active=test
-      env:
-        SPRING_DATASOURCE_URL: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1
-        SPRING_DATASOURCE_USERNAME: sa
-        SPRING_DATASOURCE_PASSWORD: ""
 
   build:
     name: Build and Push Docker Image

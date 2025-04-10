@@ -16,6 +16,7 @@ services:
       SPRING_JPA_HIBERNATE_DDL_AUTO: update  # Enable Hibernate schema updates
       SPRING_JPA_SHOW_SQL: "false"           # Optional: Set to "true" for debugging
       SPRING_FLYWAY_ENABLED: "false"
+      FIREBASE_SERVICE_ACCOUNT_KEY_PATH: /config/serviceAccountKey.json
     ports:
       - "8090:8090"
     volumes:
@@ -39,7 +40,6 @@ services:
       POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
-      FIREBASE_SERVICE_ACCOUNT_KEY_PATH: /config/serviceAccountKey.json
     ports:
       - "5433:5432"
     volumes:
