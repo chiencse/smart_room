@@ -16,7 +16,7 @@ public class DeviceStrategyResponseDTO {
     String name;
     String description;
     String status;
-    Time startTime;
+    String startTime;
 
     List<DeviceInStrategyDTO> listDeviceValues;
 
