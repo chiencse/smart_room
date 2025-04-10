@@ -19,7 +19,7 @@ services:
     ports:
       - "8090:8090"
     volumes:
-      - ./serviceAccountKey.json:/app/src/main/resources/serviceAccountKey.json
+      - ./serviceAccountKey.json:/config/serviceAccountKey.json
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8090/actuator/health"]
       interval: 30s
@@ -39,6 +39,7 @@ services:
       POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
+      FIREBASE_SERVICE_ACCOUNT_KEY_PATH: /config/serviceAccountKey.json
     ports:
       - "5433:5432"
     volumes:
