@@ -5,23 +5,33 @@ services:
     image: ghcr.io/${GHCR_USERNAME}/smartroom-app:latest
     container_name: smartroom_app
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy  # Wait for database to be ready
     env_file:
       - .env
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${DB_NAME}
       SPRING_DATASOURCE_USERNAME: ${DB_USERNAME}
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
-      SPRING_JPA_SHOW_SQL: "true"
+      SPRING_JPA_HIBERNATE_DDL_AUTO: none  # Rely on Flyway for schema management
+      SPRING_JPA_SHOW_SQL: "false"  # Disable for staging
+      SPRING_FLYWAY_ENABLED: "true"  # Explicitly enable Flyway
     ports:
-      - "8080:8080"
+      - "8090:8090"  # Align with application.properties server.port
     volumes:
-      - ./serviceAccountKey.json:/app/src/main/resources/serviceAccountKey.json
+      - ./serviceAccountKey.json:/app/serviceAccountKey.json  # Adjusted path, verify with app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8090/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
     restart: unless-stopped
+    networks:
+      - app-network
 
   postgres:
-    image: postgres:14
+    image: postgres:15  # Upgrade to newer version
     container_name: postgres_sm_room
     env_file:
       - .env
@@ -33,7 +43,19 @@ services:
       - "5433:5432"
     volumes:
       - db_data_sm:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "${DB_USERNAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     restart: unless-stopped
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
 
 volumes:
   db_data_sm:
