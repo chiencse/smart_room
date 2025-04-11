@@ -2,7 +2,7 @@ name: 🚀 Deploy Spring Boot via Docker Compose
 
 on:
   push:
-    branches: [deploy]
+    branches: [main]
   workflow_dispatch:
 
 env:
