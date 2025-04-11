@@ -97,8 +97,7 @@ public class AuthController {
                 user.setEmail(registerRequest.getEmail());
                 user.setPhoneNumber(registerRequest.getPhoneNumber());
 
-                user.setRoles(Set.of("ADMIN"));
-
+                user.setRoles(Set.of("USER"));
 
                 authService.register(user);
 
