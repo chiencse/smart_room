@@ -5,7 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface ActivityLogRepository extends JpaRepository<ActivityLog, Long> {
-    List<ActivityLog> findByDeviceId(String deviceId);
+    List<ActivityLog> findBydeviceKey(String deviceKey);
 
     List<ActivityLog> findByUserId(Long userId);
 }
