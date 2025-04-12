@@ -4,5 +4,14 @@ DB_PASSWORD = 'hello'
 DB_NAME = 'smartRoom'
 DB_PORT = 5433
 
+ADAFRUIT_API_BASE_URL=https://io.adafruit.com/api/v2/QUOCAN28
+ADAFRUIT_API_KEY=
+
+ADAFRUIT_MQTT_BROKER=tcp://io.adafruit.com:1883
+ADAFRUIT_MQTT_USERNAME=QUOCAN28
+ADAFRUIT_MQTT_KEY=
+ADAFRUIT_MQTT_FEEDS=temp,humidity,air,device.door,device.status-fan,device.status-lamp,light,device.lamp,device.fan
+
 app.jwt.secret=yourSecretKey
 app.jwt.expirationMs=86400000  # 24 hours
+
