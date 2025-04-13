@@ -26,6 +26,9 @@ public class DeviceService {
     @Autowired
     private DeviceRepository deviceRepository;
 
+    @Autowired
+    private AdafruitService adafruitService;
+
     public List<DeviceStrategyResponseDTO> getAllDeviceStrategyResponses() {
         List<Strategy> strategies = strategyRepository.findAll();
 
@@ -44,13 +47,43 @@ public class DeviceService {
                         device.getName(),
                         device.getType(),
                         device.getStatus().name(),
-                        sd.getValue()
+                        sd.getValue(),
+                        device.getDeviceKey()
                 );
             }).collect(Collectors.toList());
 
             dto.setListDeviceValues(devices);
             return dto;
         }).collect(Collectors.toList());
+    }
+
+    public void runStrategy(Long strategyId, Long userId) {
+        Strategy strategy = strategyRepository.findById(strategyId)
+                .orElseThrow(() -> new IllegalArgumentException("Strategy with ID " + strategyId + " not found."));
+
+        List<StrategyDevice> devices = strategy.getStrategyDevices();
+        if (devices == null || devices.isEmpty()) {
+            throw new IllegalStateException("No devices associated with this strategy.");
+        }
+
+        for (StrategyDevice strategyDevice : devices) {
+            try {
+                Device device = strategyDevice.getDevice();
+                if (device == null) {
+
+                    continue;
+                }
+
+                String value = strategyDevice.getValue();
+                String deviceKey = device.getDeviceKey();
+
+                if (!adafruitService.sendCommandToDevice( deviceKey, value, userId)) {;
+                    throw new RuntimeException("Failed to send command to device with ID " + device.getId());
+                }
+            } catch (Exception ex) {
+                throw ex;
+            }
+        }
     }
 
 
@@ -175,6 +208,7 @@ public class DeviceService {
         existingDevice.setLocation(device.getLocation());
         existingDevice.setOwnerId(device.getOwnerId());
         existingDevice.setRoomId(device.getRoomId());
+        existingDevice.setDeviceKey(device.getDeviceKey());
         return deviceRepository.save(existingDevice);
     }
 }

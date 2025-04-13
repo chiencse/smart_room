@@ -18,6 +18,8 @@ public class SwaggerConfig {
         return new OpenAPI()
                 .servers(List.of(
                         new Server().url("https://api-sroom.mchieens.io.vn")
+                                .description("API server for Smart Room"),
+                        new Server().url("http://localhost:8090").description("Local server for development")
                 ))
                 .components(new Components()
                         .addSecuritySchemes("bearerAuth", createBearerScheme()));

@@ -29,5 +29,6 @@ public class DeviceStrategyResponseDTO {
         String deviceType;
         String deviceStatus;
         String value;
+        String deviceKey;
     }
 }

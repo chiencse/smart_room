@@ -2,12 +2,15 @@ package com.example.smart_room.controller;
 
 import com.example.smart_room.model.Device;
 import com.example.smart_room.model.Strategy;
+import com.example.smart_room.model.User;
 import com.example.smart_room.request.DeviceStrategyDTO;
 import com.example.smart_room.response.ApiResponse;
 import com.example.smart_room.response.DeviceStrategyResponseDTO;
 import com.example.smart_room.service.DeviceService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -26,6 +29,16 @@ public class DeviceController {
             return new ApiResponse<>(201, "Strategy created successfully", strategy);
         } catch (Exception e) {
             return new ApiResponse<>(400, "Failed to create strategy: " + e.getMessage(), null);
+        }
+    }
+
+    @PostMapping("/strategy/{id}/run")
+    public ApiResponse<?> runStrategy(@PathVariable Long id, @AuthenticationPrincipal User userDetails) {
+        try {
+            deviceService.runStrategy(id, userDetails.getId());
+            return new ApiResponse<>(200, "Strategy executed successfully", null);
+        } catch (Exception e) {
+            return new ApiResponse<>(400, "Failed to execute strategy: " + e.getMessage(), null);
         }
     }
 

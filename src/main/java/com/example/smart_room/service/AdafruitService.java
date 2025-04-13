@@ -199,6 +199,7 @@ public class AdafruitService {
     public boolean sendCommandToDevice(String deviceKey, String value, Long userId) {
         try {
             String url = adafruitBaseUrl + "/feeds/" + deviceKey + "/data";
+
             HttpHeaders headers = new HttpHeaders();
             headers.set("X-AIO-Key", adafruitApiKey);
             headers.set("Content-Type", "application/json");

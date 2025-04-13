@@ -28,6 +28,9 @@ public class Device {
     private Status status = Status.OFF;
 
     @Column()
+    private String deviceKey;
+
+    @Column()
     private String location;
 
     @Column()
