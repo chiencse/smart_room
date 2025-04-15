@@ -49,7 +49,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**", "/swagger-ui/**", "/v3/api-docs/**", "swagger-ui.html").permitAll() // Các endpoint công khai
+                        .requestMatchers("/auth/**", "/swagger-ui/**", "/v3/api-docs/**", "swagger-ui.html", "/api/gpt/**").permitAll() // Các endpoint công khai
                         .requestMatchers("/admin/**", "/auth/register").hasRole("ADMIN")
                         .requestMatchers("/user/**").hasAnyRole("USER", "ADMIN")
                         .anyRequest().authenticated()
