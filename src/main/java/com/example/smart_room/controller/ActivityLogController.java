@@ -2,6 +2,7 @@ package com.example.smart_room.controller;
 
 import com.example.smart_room.model.ActivityLog;
 import com.example.smart_room.repository.ActivityLogRepository;
+import com.example.smart_room.response.ActivityLogUser;
 import com.example.smart_room.service.ActivityLogService;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,8 +48,8 @@ public class ActivityLogController {
     private ActivityLogRepository activityLogRepository;
 
     @GetMapping("/logs")
-    public ResponseEntity<List<ActivityLog>> getAllLogs() {
-        List<ActivityLog> logs = activityLogRepository.findAll();
+    public ResponseEntity<List<ActivityLogUser>> getAllLogs() {
+        List<ActivityLogUser> logs = activityLogRepository.findAllwithUsername();
         return ResponseEntity.ok(logs);
     }
 }
