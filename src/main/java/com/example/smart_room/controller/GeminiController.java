@@ -34,7 +34,7 @@ public class GeminiController {
             if (message == null || message.trim().isEmpty()) {
                 return new ApiResponse<>(400, "⚠️ Message is empty", null);
             }
-
+            System.out.println("Message: " + message);
             CommandResponse getCommands = geminiService.analyzeCommand(message);
             List<ParsedCommand> commands = getCommands.getCommands();
             if (commands == null || commands.isEmpty()) {

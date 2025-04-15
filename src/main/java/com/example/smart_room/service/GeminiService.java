@@ -80,9 +80,9 @@ public class GeminiService {
       ]
     }
 
-    - "Bạn khỏe không?" ->
+    - "Danh sách các thiết bị trong phòng?" ->
     {
-      "message": "Cảm ơn bạn đã hỏi 🥰! Mình lúc nào cũng sẵn sàng hỗ trợ bạn điều khiển ngôi nhà thông minh!",
+      "message": "Trong phòng hiện có light, temp, humidity, air, fan, door . Bạn muốn điều khiển thiết bị nào? 🏠",
       "commands": []
     }
 
