@@ -35,7 +35,7 @@ public class DeviceService {
             dto.setId(strategy.getId());
             dto.setDescription(strategy.getDescription());
             dto.setStatus(strategy.getStatus());
-            dto.setStartTime(null); // If you add a startTime to the entity later
+            dto.setStartTime(strategy.getStartTime()); // If you add a startTime to the entity later
 
             List<DeviceStrategyResponseDTO.DeviceInStrategyDTO> devices = strategy.getStrategyDevices().stream().map(sd -> {
                 Device device = sd.getDevice();
