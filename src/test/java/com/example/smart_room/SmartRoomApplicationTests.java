@@ -1,10 +1,7 @@
 package com.example.smart_room;
 
 import com.example.smart_room.config.FirebaseConfig;
-import com.example.smart_room.service.AdafruitMqttSubscriberService;
-import com.example.smart_room.service.AdafruitService;
-import com.example.smart_room.service.FirebaseService;
-import com.example.smart_room.service.OAuth2LoginSuccessHandler;
+import com.example.smart_room.service.*;
 import com.google.firebase.database.FirebaseDatabase;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -32,6 +29,9 @@ class SmartRoomApplicationTests {
 
 	@MockBean
 	private OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
+
+	@MockBean
+	private GeminiService geminiService;
 	@Test
 	void contextLoads() {
 	}
