@@ -14,6 +14,7 @@ import javax.annotation.PostConstruct;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.HashMap;
@@ -102,7 +103,7 @@ public class StrategySchedulerService {
                                 logger.error("Failed to execute strategy ID: {}: {}", strategyId, e.getMessage());
                             }
                         },
-                        nextRun.atZone(java.time.ZoneId.systemDefault()).toInstant(),
+                        nextRun.atZone(ZoneId.of("Asia/Ho_Chi_Minh")).toInstant(),
                         Duration.ofDays(24 * 60 * 60 * 1000) // Repeat every 24 hours
                 );
                 logger.info("Scheduled daily task for strategy ID: {} at {}", strategyId, nextRun);
@@ -118,7 +119,7 @@ public class StrategySchedulerService {
                                 logger.error("Failed to execute one-time strategy ID: {}: {}", strategyId, e.getMessage());
                             }
                         },
-                        nextRun.atZone(java.time.ZoneId.systemDefault()).toInstant()
+                        nextRun.atZone(ZoneId.of("Asia/Ho_Chi_Minh")).toInstant()
                 );
                 logger.info("Scheduled one-time task for strategy ID: {} at {}", strategyId, nextRun);
             }
