@@ -69,10 +69,17 @@ public class AuthController {
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
             // Load user details
+            System.out.println("User details: " + authentication.getPrincipal());
             UserDetails userDetails = userDetailsService.loadUserByUsername(loginRequest.getUsername());
 
+            User user = (User) userDetails;
+            System.out.println("User: " + user);
+            if(!user.getIsActive()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(new ApiResponse<>(401, "User is not activated", null));
+            }
             // Generate JWT token
-            String jwt = jwtUtil.generateToken((User) userDetails);
+            String jwt = jwtUtil.generateToken(user);
 
             return ResponseEntity.ok(new ApiResponse<>(200, "Login successful", new JwtResponse(jwt, userDetails.getUsername())));
 
@@ -81,7 +88,7 @@ public class AuthController {
                     .body(new ApiResponse<>(401, "Invalid username or password", null));
         } catch (Exception ex) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse<>(500, "Internal server error", null));
+                    .body(new ApiResponse<>(500, "Internal server error" + ex.getMessage(), null));
         }
     }
 

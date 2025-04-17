@@ -17,6 +17,6 @@ public class DeviceStrategyDTO {
     String description;
     String status;
     String startTime;
-
+    private String repeatStatus;
     List<DeviceValueDTO> listDeviceValues;
 }

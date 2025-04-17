@@ -34,6 +34,9 @@ public class User implements UserDetails {
     @Column(nullable = true, unique = true)
     private String phoneNumber;
 
+    @Column(nullable = true)
+    private Boolean isActive = true;
+
     @ElementCollection(fetch = FetchType.EAGER) // Load roles with user
     @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "role")

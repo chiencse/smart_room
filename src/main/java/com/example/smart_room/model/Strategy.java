@@ -29,6 +29,9 @@ public class Strategy {
     @Column
     private String startTime;
 
+    @Column
+    private String repeatStatus;
+
     @OneToMany(mappedBy = "strategy", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference("strategy-device")
     private List<StrategyDevice> strategyDevices;

@@ -29,6 +29,9 @@ public class DeviceService {
     @Autowired
     private AdafruitService adafruitService;
 
+    @Autowired
+    private StrategySchedulerService schedulerService;
+
     public List<DeviceStrategyResponseDTO> getAllDeviceStrategyResponses() {
         List<Strategy> strategies = strategyRepository.findAll();
 
@@ -38,7 +41,8 @@ public class DeviceService {
             dto.setId(strategy.getId());
             dto.setDescription(strategy.getDescription());
             dto.setStatus(strategy.getStatus());
-            dto.setStartTime(strategy.getStartTime()); // If you add a startTime to the entity later
+            dto.setStartTime(strategy.getStartTime());
+            dto.setRepeatStatus(strategy.getRepeatStatus());
 
             List<DeviceStrategyResponseDTO.DeviceInStrategyDTO> devices = strategy.getStrategyDevices().stream().map(sd -> {
                 Device device = sd.getDevice();
@@ -57,6 +61,7 @@ public class DeviceService {
         }).collect(Collectors.toList());
     }
 
+    @Transactional
     public void runStrategy(Long strategyId, Long userId) {
         Strategy strategy = strategyRepository.findById(strategyId)
                 .orElseThrow(() -> new IllegalArgumentException("Strategy with ID " + strategyId + " not found."));
@@ -94,6 +99,7 @@ public class DeviceService {
         strategy.setDescription(dto.getDescription());
         strategy.setStatus(dto.getStatus());
         strategy.setStartTime(dto.getStartTime());
+        strategy.setRepeatStatus(dto.getRepeatStatus());
 
         if (dto.getListDeviceValues() != null) {
             @NotNull List<StrategyDevice> strategyDevices = dto.getListDeviceValues().stream()
@@ -109,8 +115,10 @@ public class DeviceService {
                     .collect(Collectors.toList());
             strategy.setStrategyDevices(strategyDevices);
         }
-
-        return strategyRepository.save(strategy);
+        Strategy savedStrategy = strategyRepository.save(strategy);
+        schedulerService.updateStrategySchedule(savedStrategy.getId(), savedStrategy.getStartTime(),
+                savedStrategy.getStatus(), savedStrategy.getRepeatStatus(), savedStrategy.getId());
+        return savedStrategy;
     }
 
     @Transactional
@@ -122,6 +130,7 @@ public class DeviceService {
         strategy.setDescription(dto.getDescription());
         strategy.setStatus(dto.getStatus());
         strategy.setStartTime(dto.getStartTime());
+        strategy.setRepeatStatus(dto.getRepeatStatus());
 
         // Step 1: Collect updated device IDs
         List<Long> updatedDeviceIds = dto.getListDeviceValues().stream()
@@ -160,6 +169,8 @@ public class DeviceService {
         }
         System.out.println(strategy.getStrategyDevices().size());
         // Save the updated strategy with all associated devices
+        schedulerService.updateStrategySchedule(strategy.getId(), dto.getStartTime(),
+                dto.getStatus(), dto.getRepeatStatus(), strategy.getId());
         return strategyRepository.save(strategy);
     }
 
@@ -169,6 +180,8 @@ public class DeviceService {
     public void deleteStrategy(Long id) {
         Strategy strategy = strategyRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Strategy not found"));
+
+        schedulerService.cancelScheduledStrategy(id);
         strategyRepository.delete(strategy);
     }
 

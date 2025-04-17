@@ -33,6 +33,7 @@ public class SmartRoomApplication implements CommandLineRunner {
 			admin.setUsername("admin");
 			admin.setPhoneNumber("0123456789");
 			admin.setPassword(passwordEncoder.encode("admin"));
+			admin.setIsActive(true);
 			admin.setRoles(Set.of("ADMIN"));
 
 			userRepository.save(admin);
